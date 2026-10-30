@@ -1,0 +1,30 @@
+# CodeBuild instructions for payment-svc.
+# CodePipeline runs this on every push to main:
+#   build the image -> push to ECR -> write imagedefinitions.json for the ECS deploy stage.
+# Env vars: AWS_DEFAULT_REGION (set by CodeBuild), AWS_ACCOUNT_ID (set on the CodeBuild project).
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPO_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/paylab/payment-svc
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+      - echo "Image will be $REPO_URI:$IMAGE_TAG"
+  build:
+    commands:
+      # CodeBuild runs on amd64, the same as our Fargate tasks, so no --platform flag is needed.
+      - docker build -t $REPO_URI:$IMAGE_TAG .
+      - docker tag $REPO_URI:$IMAGE_TAG $REPO_URI:latest
+  post_build:
+    commands:
+      - docker push $REPO_URI:$IMAGE_TAG
+      - docker push $REPO_URI:latest
+      # "name" MUST equal the container name in taskdef.json, or the ECS deploy fails.
+      - printf '[{"name":"payment-svc","imageUri":"%s"}]' $REPO_URI:$IMAGE_TAG > imagedefinitions.json
+      - cat imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
