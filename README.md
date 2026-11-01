@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset=".github/aricxpoint-logo-white.png">
-    <img alt="aricxpoint technologies" src=".github/aricxpoint-logo-black.png" width="320">
+    <source media="(prefers-color-scheme: dark)" srcset=".github/aricxpoint-labs-logo-white.png">
+    <img alt="aricxpoint labs" src=".github/aricxpoint-labs-logo-black.png" width="320">
   </picture>
 </p>
 
